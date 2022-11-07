@@ -1,5 +1,18 @@
 # Use Examples
 
+## Run server & client
+
+``` bash
+make build
+make run
+```
+
+## Run in container
+
+``` bash
+make server_host=your_hostserver_name server_port=your_hostserver_server_port client_host=your_hostserver_name client_port=your_hostserver_client_port run_docker
+```
+
 ## Run Server
 
 ``` bash

@@ -31,3 +31,10 @@ coverage.txt
 *.swp
 /example/client/client
 /example/server/server
+
+/example/client/oauth_client
+/example/server/oauth_server
+
+server.log
+client.log
+

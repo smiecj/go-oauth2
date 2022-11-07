@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -15,23 +16,48 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-const (
-	authServerURL = "http://localhost:9096"
+var (
+	clientHost string
+	clientPort string
+
+	serverHost      string
+	serverPort      string
+	serverInnerHost string
+	serverInnerPort string
+
+	redirectUrl        string
+	authServerUrl      string
+	authServerInnerUrl string
+
+	globalToken *oauth2.Token // Non-concurrent security
+	config      oauth2.Config
 )
 
-var (
+func init() {
+	flag.StringVar(&clientHost, "ch", "localhost", "redirect client hostname")
+	flag.StringVar(&clientPort, "cp", "9094", "redirect client port")
+
+	flag.StringVar(&serverHost, "sh", "localhost", "auth server hostname")
+	flag.StringVar(&serverPort, "sp", "9096", "auth server port")
+	flag.StringVar(&serverInnerHost, "sih", "localhost", "auth server hostname")
+	flag.StringVar(&serverInnerPort, "sip", "9096", "auth server port")
+
+	flag.Parse()
+	redirectUrl = "http://" + clientHost + ":" + clientPort + "/oauth2"
+	authServerUrl = "http://" + serverHost + ":" + serverPort
+	authServerInnerUrl = "http://" + serverInnerHost + ":" + serverInnerPort
+
 	config = oauth2.Config{
 		ClientID:     "222222",
 		ClientSecret: "22222222",
 		Scopes:       []string{"all"},
-		RedirectURL:  "http://localhost:9094/oauth2",
+		RedirectURL:  redirectUrl,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  authServerURL + "/oauth/authorize",
-			TokenURL: authServerURL + "/oauth/token",
+			AuthURL:  authServerUrl + "/oauth/authorize",
+			TokenURL: authServerInnerUrl + "/oauth/token",
 		},
 	}
-	globalToken *oauth2.Token // Non-concurrent security
-)
+}
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +116,7 @@ func main() {
 			return
 		}
 
-		resp, err := http.Get(fmt.Sprintf("%s/test?access_token=%s", authServerURL, globalToken.AccessToken))
+		resp, err := http.Get(fmt.Sprintf("%s/test?access_token=%s", authServerUrl, globalToken.AccessToken))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

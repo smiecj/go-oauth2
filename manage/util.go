@@ -28,3 +28,8 @@ func DefaultValidateURI(baseURI string, redirectURI string) error {
 	}
 	return nil
 }
+
+// EmptyValidateURI: will not validate uri
+func EmptyValidateURI(baseURI string, redirectURI string) error {
+	return nil
+}

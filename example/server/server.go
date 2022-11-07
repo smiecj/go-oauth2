@@ -45,6 +45,9 @@ func main() {
 		log.Println("Dumping requests")
 	}
 	manager := manage.NewDefaultManager()
+	// set empty url validator (support run in container)
+	manager.SetValidateURIHandler(manage.EmptyValidateURI)
+
 	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 
 	// token store
@@ -86,6 +89,7 @@ func main() {
 	http.HandleFunc("/auth", authHandler)
 
 	http.HandleFunc("/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("[test] authorize: r: %v\n", r)
 		if dumpvar {
 			dumpRequest(os.Stdout, "authorize", r)
 		}
@@ -105,6 +109,7 @@ func main() {
 		store.Delete("ReturnUri")
 		store.Save()
 
+		log.Printf("[test] authorize: ready to author req\n")
 		err = srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -167,7 +172,10 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 		return
 	}
 
+	log.Printf("[test] ready to get LoggedInUserID\n")
+	log.Printf("[test] current session id: %s\n", store.SessionID())
 	uid, ok := store.Get("LoggedInUserID")
+	log.Printf("[test] get LoggedInUserID: %v, ok: %v\n", uid, ok)
 	if !ok {
 		if r.Form == nil {
 			r.ParseForm()
@@ -197,6 +205,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("[test] request method: %s\n", r.Method)
 	if r.Method == "POST" {
 		if r.Form == nil {
 			if err := r.ParseForm(); err != nil {
@@ -204,6 +213,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		log.Printf("[test] ready to get login user id and store: %v\n", r.Form.Get("username"))
+		log.Printf("[test] current session id: %s\n", store.SessionID())
 		store.Set("LoggedInUserID", r.Form.Get("username"))
 		store.Save()
 
